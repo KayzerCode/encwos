@@ -1,5 +1,5 @@
 // Single place to configure API base and request behavior
-const API_BASE = (import.meta.env.VITE_API_BASE || '/').replace(/\/+$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/+$/, '');
 
 function joinUrl(base: string, path: string) {
   const p = path.startsWith('/') ? path : `/${path}`;

@@ -60,7 +60,7 @@ async function verifyJwt(token: string, secret: string) {
 }
 
 /* ---------------------------- health check ----------------------------- */
-app.get('/api/health', async (c) => {
+app.get('/health', async (c) => {
   try {
     const f = await c.env.DB.prepare('SELECT COUNT(*) as cnt FROM folders').first<{ cnt: number }>()
     const n = await c.env.DB.prepare('SELECT COUNT(*) as cnt FROM notes').first<{ cnt: number }>()
@@ -76,8 +76,8 @@ const credsSchema = z.object({
   password: z.string().min(6).max(100),
 })
 
-// POST /api/auth/register
-app.post('/api/auth/register', zValidator('json', credsSchema), async (c) => {
+// POST /auth/register
+app.post('/auth/register', zValidator('json', credsSchema), async (c) => {
   const { email, password } = await c.req.json()
   const exists = await one<{ id: number }>(q(c.env.DB, 'SELECT id FROM users WHERE email = ?1', [email]))
   if (exists) return jsonError(c, 409, 'email-exists', 'Email already registered.')
@@ -94,8 +94,8 @@ app.post('/api/auth/register', zValidator('json', credsSchema), async (c) => {
   return c.json(row)
 })
 
-// POST /api/auth/login
-app.post('/api/auth/login', zValidator('json', credsSchema), async (c) => {
+// POST /auth/login
+app.post('/auth/login', zValidator('json', credsSchema), async (c) => {
   const { email, password } = await c.req.json()
   const row = await one<{ id: number; email: string; password_hash: string }>(
     q(c.env.DB, 'SELECT id, email, password_hash FROM users WHERE email = ?1', [email])
@@ -109,14 +109,14 @@ app.post('/api/auth/login', zValidator('json', credsSchema), async (c) => {
   return c.json({ id: row.id, email: row.email })
 })
 
-// POST /api/auth/logout
-app.post('/api/auth/logout', (c) => {
+// POST /auth/logout
+app.post('/auth/logout', (c) => {
   deleteCookie(c, COOKIE, { path: '/' })
   return c.json({ ok: true })
 })
 
-// GET /api/auth/me
-app.get('/api/auth/me', async (c) => {
+// GET /auth/me
+app.get('/auth/me', async (c) => {
   const tok = getCookie(c, COOKIE)
   if (!tok) return jsonError(c, 401, 'unauthorized', 'No session.')
   try {
@@ -128,10 +128,10 @@ app.get('/api/auth/me', async (c) => {
 })
 
 /* -------------------------- API auth guard ----------------------------- */
-// Protect everything under /api/* except /api/auth/* and /api/health
-app.use('/api/*', async (c, next) => {
+// Protect everything under /* except /auth/* and /health
+app.use('/*', async (c, next) => {
   const p = c.req.path
-  if (p === '/api/health' || p.startsWith('/api/auth/')) return next()
+  if (p === '/health' || p.startsWith('/auth/')) return next()
 
   const tok = getCookie(c, COOKIE)
   if (!tok) return jsonError(c, 401, 'unauthorized', 'No session.')
@@ -144,12 +144,12 @@ app.use('/api/*', async (c, next) => {
 })
 
 /* =============================== FOLDERS =============================== */
-/** GET /api/folders
- *  GET /api/folders?tree=1
+/** GET /folders
+ *  GET /folders?tree=1
  *  - Without ?tree: flat list
  *  - With   ?tree=1: hierarchical tree built in memory
  */
-app.get('/api/folders', async c => {
+app.get('/folders', async c => {
   const asTree = c.req.query('tree') === '1'
   const rows = await c.env.DB
     .prepare('SELECT id, name, parentId, createdAt, updatedAt FROM folders ORDER BY name')
@@ -171,10 +171,10 @@ app.get('/api/folders', async c => {
   return c.json(build(null))
 })
 
-/** POST /api/folders
+/** POST /folders
  *  Body: { name: string, parentId?: number|null }
  */
-app.post('/api/folders', async c => {
+app.post('/folders', async c => {
   const { name, parentId = null } = await c.req.json().catch(() => ({}))
   if (!name || typeof name !== 'string' || !name.trim()) {
     return jsonError(c, 400, 'invalid-name', 'Field "name" is required and must be a non-empty string.')
@@ -195,10 +195,10 @@ app.post('/api/folders', async c => {
   return c.json(row, 201)
 })
 
-/** PATCH /api/folders/:id
+/** PATCH /folders/:id
  *  Body: { name?: string, parentId?: number|null }
  */
-app.patch('/api/folders/:id', async c => {
+app.patch('/folders/:id', async c => {
   const id = Number(c.req.param('id'))
   if (!Number.isFinite(id)) return jsonError(c, 400, 'invalid-id', 'Invalid folder id.')
   const exists = await one<{ id: number }>(q(c.env.DB, 'SELECT id FROM folders WHERE id = ?1', [id]))
@@ -250,8 +250,8 @@ app.patch('/api/folders/:id', async c => {
   return c.json(row)
 })
 
-/** DELETE /api/folders/:id[?cascade=1] */
-app.delete('/api/folders/:id', async c => {
+/** DELETE /folders/:id[?cascade=1] */
+app.delete('/folders/:id', async c => {
   const id = Number(c.req.param('id'))
   if (!Number.isFinite(id)) return jsonError(c, 400, 'invalid-id', 'Invalid folder id.')
   const cascade = c.req.query('cascade') === '1'
@@ -314,11 +314,11 @@ app.delete('/api/folders/:id', async c => {
 })
 
 /* ================================ NOTES ================================ */
-/** GET /api/notes
- *  GET /api/notes?folderId=3
- *  GET /api/notes?folderId=3&deep=1  — include descendants via CTE
+/** GET /notes
+ *  GET /notes?folderId=3
+ *  GET /notes?folderId=3&deep=1  — include descendants via CTE
  */
-app.get('/api/notes', async c => {
+app.get('/notes', async c => {
   const folderIdStr = c.req.query('folderId')
   const deep = c.req.query('deep') === '1'
 
@@ -357,10 +357,10 @@ app.get('/api/notes', async c => {
   return c.json(res.results ?? [])
 })
 
-/** POST /api/notes
+/** POST /notes
  *  Body: { folderId: number, title: string, body?: string }
  */
-app.post('/api/notes', async c => {
+app.post('/notes', async c => {
   const { folderId, title, body = '' } = await c.req.json().catch(() => ({}))
   if (!Number.isFinite(folderId)) return jsonError(c, 400, 'invalid-folderId', 'folderId is required and must be a number.')
   if (!title || typeof title !== 'string' || !title.trim()) {
@@ -380,10 +380,10 @@ app.post('/api/notes', async c => {
   return c.json(row, 201)
 })
 
-/** PATCH /api/notes/:id
+/** PATCH /notes/:id
  *  Body: { title?: string, body?: string, folderId?: number, flag?: 0|1 }
  */
-app.patch('/api/notes/:id', async c => {
+app.patch('/notes/:id', async c => {
   const id = Number(c.req.param('id'))
   if (!Number.isFinite(id)) return jsonError(c, 400, 'invalid-id', 'Invalid note id.')
 
@@ -427,8 +427,8 @@ app.patch('/api/notes/:id', async c => {
   return c.json(row)
 })
 
-/** DELETE /api/notes/:id */
-app.delete('/api/notes/:id', async c => {
+/** DELETE /notes/:id */
+app.delete('/notes/:id', async c => {
   const id = Number(c.req.param('id'))
   if (!Number.isFinite(id)) return jsonError(c, 400, 'invalid-id', 'Invalid note id.')
   const exists = await one<{ id: number }>(q(c.env.DB, 'SELECT id FROM notes WHERE id = ?1', [id]))
