@@ -1,0 +1,12 @@
+{
+  "folders": [
+    { "id": "inbox", "name": "Inbox" },
+    { "id": "work", "name": "Work" },
+    { "id": "archive", "name": "Archive" }
+  ],
+  "notes": [
+    { "id": "1", "folderId": "inbox", "title": "First note", "body": "Hello EncWos!", "updatedAt": "2025-08-16T09:00:00Z" },
+    { "id": "2", "folderId": "work", "title": "Roadmap", "body": "Local JSON → API → Worker → D1/R2", "updatedAt": "2025-08-16T09:10:00Z" },
+    { "id": "3", "folderId": "inbox", "title": "Ideas", "body": "Folders, encryption, sharing… Folders, encryption, sharing…Folders, encryption, sharing… Folders, encryption, sharing…Folders, encryption, sharing… Folders, encryption, sharing…Folders, encryption, sharing… Folders, encryption, sharing…Folders, encryption, sharing… Folders, encryption, sharing…Folders, encryption, sharing… Folders, encryption, sharing…", "updatedAt": "2025-08-16T10:00:00Z" }
+  ]
+}

@@ -1,0 +1,200 @@
+/* ---- Vars: fixed header height (no JS) ---- */
+:root {
+    --header-h: 56px;
+    /* mobile & default */
+}
+
+@media (min-width: 768px) {
+    :root {
+        --header-h: 64px;
+    }
+}
+
+/* ---- App shell ---- */
+html, body, #root {
+    height: 100%;
+}
+
+body {
+    margin: 0 !important;
+}
+
+.app {
+    min-height: 100svh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: #25375b;
+    color: #e6e6e6;
+}
+
+/* ---- Header (sticky, fixed height) ---- */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #222734;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .06);
+
+    /* fixed height + safe-area */
+    height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    padding: 0 16px;
+    padding-top: env(safe-area-inset-top, 0px);
+
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand {
+    font-weight: 700;
+    letter-spacing: .4px;
+}
+
+/* Desktop nav */
+.app-nav.desktop {
+    display: none;
+}
+
+.app-nav.desktop a {
+    text-decoration: none;
+    color: #bfc7d5;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.app-nav.desktop a.active,
+.app-nav.desktop a:hover {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+}
+
+/* Burger */
+.nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, .12);
+    color: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.nav-toggle:hover {
+    background: rgba(255, 255, 255, .05);
+}
+
+/* ---- Backdrop ---- */
+.nav-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .22s ease, visibility .22s ease;
+    z-index: 1200;
+}
+
+.nav-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ---- Mobile drawer: fixed and always under header ---- */
+.app-nav.mobile-drawer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    background: #141821;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px 12px;
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform .22s ease, opacity .22s ease, visibility .22s ease;
+    z-index: 1300;
+    /* Above backdrop */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.app-nav.mobile-drawer.open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.app-nav.mobile-drawer a {
+    text-decoration: none;
+    color: #cdd6e4;
+    padding: 12px 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.app-nav.mobile-drawer a.active,
+.app-nav.mobile-drawer a:hover {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+}
+
+.app-nav.mobile-drawer a:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.3);
+    outline-offset: 2px;
+}
+
+/* ---- Main & Footer ---- */
+.app-main {
+    flex: 1;
+    padding: 16px;
+}
+
+.app-main>*:first-child {
+    margin-top: 0;
+}
+
+.app-footer {
+    margin-top: auto;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px calc(env(safe-area-inset-bottom, 0px) + 8px);
+    background: #11151c;
+    box-shadow: 0 -1px 0 rgba(255, 255, 255, .06);
+    color: #97a3b6;
+    font-size: 14px;
+}
+
+/* ---- Desktop breakpoint ---- */
+@media (min-width: 768px) {
+    .app-nav.desktop {
+        display: flex;
+        gap: 16px;
+    }
+
+    .nav-toggle,
+    .app-nav.mobile-drawer,
+    .nav-backdrop {
+        display: none !important;
+    }
+}
+
+/* ---- Scroll lock when menu open ---- */
+html.no-scroll,
+html.no-scroll body {
+    overflow: hidden;
+    height: 100%;
+}
+
+/* ---- Focus trap helper ---- */
+.app-nav.mobile-drawer a:first-child {
+    margin-top: 4px;
+}

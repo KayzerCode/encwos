@@ -1,0 +1,137 @@
+/* Desktop grid: sidebar + main */
+.workspace {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    min-height: 60vh;
+}
+
+/* Sidebar container (your Sidebar component is inside) */
+.ws-sidebar {
+    background: #2d354c;
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 4px;
+}
+
+/* Main column */
+.ws-main {
+    padding: 12px;
+}
+
+/* Mobile toolbar (Folders button + breadcrumbs) */
+.ws-toolbar {
+    display: none;
+    /* mobile-only; enabled below */
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.ws-toolbar .ghost {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
+    padding: 6px 10px;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+/* Breadcrumbs (desktop row) */
+.ws-breadcrumb-row {
+    margin-bottom: 10px;
+}
+
+/* Breadcrumb visuals */
+.breadcrumbs {
+    color: #ffffff;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.breadcrumbs .sep {
+    opacity: .5;
+    margin: 0 4px;
+}
+
+.breadcrumbs .name {
+    color: #ffffff;
+}
+
+/* Notes list defaults can stay inline in TSX; add card polish if needed */
+.note-card {
+    background: #151b26;
+    border: 1px solid rgba(255, 255, 255, .06);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+/* Backdrop for mobile off-canvas sidebar */
+.ws-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+    z-index: 900;
+}
+
+.ws-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Mobile: sidebar becomes off-canvas */
+@media (max-width: 1024px) {
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .ws-sidebar {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 56px);
+        /* adjust if header height differs */
+        left: 0;
+        bottom: 0;
+        width: min(86vw, 320px);
+        transform: translateX(-105%);
+        transition: transform .22s ease;
+        z-index: 901;
+    }
+
+    .ws-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .ws-toolbar {
+        display: flex;
+    }
+
+    /* show mobile tools */
+    .ws-breadcrumb-row {
+        display: none;
+    }
+
+    /* hide desktop breadcrumb */
+}
+
+/* Small helpers */
+.muted {
+    color: #98a6bd;
+}
+
+.error {
+    color: #ff6b6b;
+}
+
+.note-title {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 4px;
+    padding: 8px;
+    background-color: #517be7;
+}

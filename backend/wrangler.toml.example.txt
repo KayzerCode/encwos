@@ -1,0 +1,9 @@
+name = "encwos-backend"
+main = "src/index.ts"
+compatibility_date = "2025-08-16"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "encwos-db"
+database_id = "<Enter key here>"
+migrations_dir = "migrations"

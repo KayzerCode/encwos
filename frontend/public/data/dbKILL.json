@@ -1,0 +1,13 @@
+{
+  "folders": [
+    { "id": 1, "name": "All", "parentId": null },
+    { "id": 2, "name": "Inbox", "parentId": null },
+    { "id": 3, "name": "Work",  "parentId": 1 },
+    { "id": 4, "name": "Ideas", "parentId": 3 }
+  ],
+  "notes": [
+    { "id": 1, "folderId": 2, "title": "First note",  "body": "Hello EncWos!", "updatedAt": "2025-08-16T09:00:00Z" },
+    { "id": 2, "folderId": 3, "title": "Roadmap",     "body": "Local JSON → API → Worker → D1/R2", "updatedAt": "2025-08-16T09:10:00Z" },
+    { "id": 3, "folderId": 4, "title": "Subfolder",   "body": "Folders, encryption, sharing…", "updatedAt": "2025-08-16T10:00:00Z" }
+  ]
+}
