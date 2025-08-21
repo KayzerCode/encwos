@@ -1,7 +1,7 @@
-# EncWos (Encrypted Work Space)
+## EncWos (Encrypted Work Space)
 Edge-stack Cloudflare: Pages + Workers + D1 + R2.
 
-## Backend
+# Backend
 # Run local DB
 cd backend
 pnpm run dev
@@ -10,6 +10,6 @@ pnpm run dev
 cd backend
 pnpm run dev --remote
 
-## Frontend
+# Frontend
 cd frontend
 pnpm run dev

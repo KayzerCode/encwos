@@ -374,7 +374,18 @@ export default function WorkspacePage() {
 
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'right' }}>
+                  <span style={{
+                    marginRight: 8,
+                    color: n.flag === 0 ? '#fff' : '#f41c04ff',
+                    marginTop: 4
+                  }}>
+                    {n.updatedAt && (
+                      <div style={{ fontSize: 12, marginTop: 4 }}>
+                        Upd: {new Date(n.updatedAt).toLocaleString('ru-RU')}
+                      </div>
+                    )}
+                  </span>
                   <button
                     onClick={() => onDeleteNote(n)}
                     style={{
@@ -391,11 +402,6 @@ export default function WorkspacePage() {
 
               </div>
               <div style={{ whiteSpace: 'pre-wrap' }}>{n.body}</div>
-              {n.updatedAt && (
-                <div style={{ opacity: 0.6, fontSize: 12, marginTop: 4 }}>
-                  Updated: {new Date(n.updatedAt).toLocaleString()}
-                </div>
-              )}
             </div>
           ))}
           {visibleNotes.length === 0 && (
