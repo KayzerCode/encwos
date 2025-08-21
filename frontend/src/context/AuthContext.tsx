@@ -2,7 +2,10 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { apiLogin, apiLogout, apiMe, apiRegister } from '../services/api'
 
-type User = { id: number; email: string } | null
+import type { AuthUser } from '../types/auth';
+
+type User = AuthUser | null;
+
 type Ctx = {
   user: User
   loading: boolean
@@ -34,8 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { refresh() }, [])
 
   const login = async (email: string, password: string) => {
-    const u = await apiLogin(email, password)
-    setUser({ id: u.id, email: u.email })
+    const u = await apiLogin(email, password);
+    setUser(u);            // TS знает, что это AuthUser
   }
 
   const logout = async () => {
@@ -44,9 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const register = async (email: string, password: string) => {
-    const u = await apiRegister(email, password);  // server sets HttpOnly cookie
-    setUser({ id: u.id, email: u.email });         // reflect in client state
-  };
+    const u = await apiRegister(email, password);
+    setUser(u);
+  }
 
   return (
     <AuthCtx.Provider value={{ user, loading, login, logout, refresh, register }}>
