@@ -38,9 +38,9 @@ export default function LoginPage() {
       <div style={{ marginTop: 16 }}>
         <button onClick={onLogout}>Sign out</button>
       </div>
-      <div>
+      {/* <div>
         <button onClick={() => nav('/register')}>Create an account</button>
-      </div>
+      </div> */}
 
     </div>
   )
