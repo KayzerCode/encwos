@@ -47,6 +47,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const register = async (email: string, password: string) => {
+    console.log('registration closed!');
+    return;
     const u = await apiRegister(email, password);
     setUser(u);
   }
