@@ -8,6 +8,7 @@ import { fetchFolders } from '../services/folders';
 import './workspace.css';
 import type { Folder, FolderRaw } from '../types/folder';
 import { isInSubtreeFlat, pickDefaultFolderIdCached } from '../utils/folderHelpers';
+  import NoteMarkdown from '../components/NoteMarkdown';
 
 export default function WorkspacePage() {
   // Selected folder id (null = All)
@@ -401,7 +402,7 @@ export default function WorkspacePage() {
                 </div>
 
               </div>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{n.body}</div>
+              <NoteMarkdown source={n.body} />
             </div>
           ))}
           {visibleNotes.length === 0 && (
