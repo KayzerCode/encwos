@@ -1,4 +1,5 @@
 // Single place to configure API base and request behavior
+// src/lib/api.ts
 const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/+$/, '');
 
 function joinUrl(base: string, path: string) {

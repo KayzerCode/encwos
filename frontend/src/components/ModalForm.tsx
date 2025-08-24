@@ -1,4 +1,7 @@
+// comments only in English
 import { useState, useEffect, useRef } from 'react';
+import TurndownService from 'turndown';
+import { gfm } from 'turndown-plugin-gfm';
 import './ModalForm.css';
 
 type Field = {
@@ -18,7 +21,17 @@ type Props = {
   onCancel: () => void;
   submitLabel?: string;
   cancelLabel?: string;
+  /** Optional image uploader: returns public URL for pasted image files */
+  onUploadImage?: (file: File) => Promise<string>;
 };
+
+// Create a single Turndown instance (avoid recreating on each render)
+const td = new TurndownService({
+  headingStyle: 'atx',
+  codeBlockStyle: 'fenced',
+  bulletListMarker: '-',
+});
+td.use(gfm); // tables, strikethrough, task lists
 
 export default function ModalForm({
   isOpen,
@@ -28,6 +41,7 @@ export default function ModalForm({
   onCancel,
   submitLabel = 'Save',
   cancelLabel = 'Cancel',
+  onUploadImage,
 }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -50,19 +64,15 @@ export default function ModalForm({
     }
   }, [isOpen, fields]);
 
-  // Handle escape key
+  // Handle escape key and body scroll lock
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onCancel();
-      }
+      if (e.key === 'Escape' && isOpen) onCancel();
     };
-
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden'; // Prevent background scroll
+      document.body.style.overflow = 'hidden';
     }
-
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
@@ -71,36 +81,81 @@ export default function ModalForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate required fields
     const newErrors: Record<string, string> = {};
     fields.forEach(field => {
       if (field.required && !values[field.name]?.trim()) {
         newErrors[field.name] = `${field.label} is required`;
       }
     });
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-
     onSubmit(values);
   };
 
   const handleChange = (name: string, value: string) => {
     setValues(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    console.log('Backdrop clicked:', e.target);
+    // keep disabled to avoid accidental close while selecting
+    if (e.target === e.currentTarget) onCancel();
+  };
 
-    /* if (e.target === e.currentTarget) {
-      onCancel();
-    } */
+  // === Paste support for textarea (Variant B) ===
+  // Converts HTML -> Markdown and inserts at caret; handles pasted images via onUploadImage.
+  const handlePasteIntoTextarea = async (
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+    fieldName: string
+  ) => {
+    const html = e.clipboardData.getData('text/html');
+    const files = e.clipboardData.files;
+    const el = e.currentTarget;
+
+    // helper: insert given string at current selection for this field
+    const insertAtSelection = (insert: string) => {
+      const current = values[fieldName] ?? '';
+      const start = el.selectionStart ?? current.length;
+      const end = el.selectionEnd ?? current.length;
+      const next = current.slice(0, start) + insert + current.slice(end);
+      handleChange(fieldName, next);
+      // restore caret after state update
+      requestAnimationFrame(() => {
+        try {
+          el.focus();
+          const pos = start + insert.length;
+          el.setSelectionRange(pos, pos);
+        } catch {}
+      });
+    };
+
+    // 1) If HTML present: convert to Markdown
+    if (html) {
+      e.preventDefault();
+      const md = td.turndown(html);
+      insertAtSelection(md);
+      return;
+    }
+
+    // 2) If image file(s) pasted and we have an uploader, upload first image
+    if (files && files.length > 0 && onUploadImage) {
+      const img = Array.from(files).find(f => f.type.startsWith('image/'));
+      if (img) {
+        e.preventDefault();
+        try {
+          const url = await onUploadImage(img);
+          insertAtSelection(`![](${url})`);
+        } catch (err) {
+          // optional: you may show a toast
+          console.error('Image upload failed:', err);
+        }
+        return;
+      }
+    }
+
+    // 3) Fallback: allow default plain-text paste
   };
 
   if (!isOpen) return null;
@@ -131,9 +186,14 @@ export default function ModalForm({
               {field.type === 'textarea' ? (
                 <textarea
                   id={field.name}
-                  ref={index === 0 ? firstFieldRef as React.RefObject<HTMLTextAreaElement> : null}
+                  ref={
+                    index === 0
+                      ? (firstFieldRef as React.RefObject<HTMLTextAreaElement>)
+                      : null
+                  }
                   value={values[field.name] || ''}
                   onChange={(e) => handleChange(field.name, e.target.value)}
+                  onPaste={(e) => handlePasteIntoTextarea(e, field.name)}
                   placeholder={field.placeholder}
                   className={`field-input ${errors[field.name] ? 'error' : ''}`}
                   rows={12}
@@ -141,7 +201,11 @@ export default function ModalForm({
               ) : (
                 <input
                   id={field.name}
-                  ref={index === 0 ? firstFieldRef as React.RefObject<HTMLInputElement> : null}
+                  ref={
+                    index === 0
+                      ? (firstFieldRef as React.RefObject<HTMLInputElement>)
+                      : null
+                  }
                   type="text"
                   value={values[field.name] || ''}
                   onChange={(e) => handleChange(field.name, e.target.value)}
