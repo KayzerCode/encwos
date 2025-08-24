@@ -18,3 +18,10 @@
     border-radius: 8px;
     overflow: auto;
 }
+
+.field-preview {
+    padding: .75rem;
+    border-radius: 8px;
+    overflow: auto;
+    background: rgba(127, 127, 127, .15);
+}
