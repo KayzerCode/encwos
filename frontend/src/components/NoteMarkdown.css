@@ -1,0 +1,20 @@
+/* .markdown-body optional defaults */
+.markdown-body h1, h2, h3 {
+    margin: 0.6em 0 0.3em;
+}
+
+.markdown-body p, .markdown-body ul, .markdown-body ol {
+    margin: 0.4em 0;
+}
+
+.markdown-body code {
+    padding: 0.1em 0.25em;
+    border-radius: 4px;
+    background: rgba(127, 127, 127, .15);
+}
+
+.markdown-body pre {
+    padding: .75rem;
+    border-radius: 8px;
+    overflow: auto;
+}

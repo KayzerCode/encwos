@@ -1,8 +1,10 @@
+// ModalForm.tsx
 // comments only in English
 import { useState, useEffect, useRef } from 'react';
 import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
 import './ModalForm.css';
+import NoteMarkdown from './NoteMarkdown';
 
 type Field = {
   name: string;
@@ -25,13 +27,16 @@ type Props = {
   onUploadImage?: (file: File) => Promise<string>;
 };
 
-// Create a single Turndown instance (avoid recreating on each render)
+// Single Turndown instance
 const td = new TurndownService({
   headingStyle: 'atx',
   codeBlockStyle: 'fenced',
   bulletListMarker: '-',
 });
-td.use(gfm); // tables, strikethrough, task lists
+td.use(gfm);
+
+// Simple detector for raw HTML strings
+const looksLikeHTML = (s: string) => /<\/?[a-z][\s\S]*>/i.test(s);
 
 export default function ModalForm({
   isOpen,
@@ -45,16 +50,21 @@ export default function ModalForm({
 }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // per-textarea mode: 'edit' | 'preview'
+  const [modes, setModes] = useState<Record<string, 'edit' | 'preview'>>({});
   const firstFieldRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   // Initialize values when modal opens
   useEffect(() => {
     if (isOpen) {
       const initialValues: Record<string, string> = {};
+      const initialModes: Record<string, 'edit' | 'preview'> = {};
       fields.forEach(field => {
         initialValues[field.name] = field.defaultValue || '';
+        if (field.type === 'textarea') initialModes[field.name] = 'edit';
       });
       setValues(initialValues);
+      setModes(initialModes);
       setErrors({});
 
       // Focus first field after a small delay to ensure modal is rendered
@@ -81,6 +91,8 @@ export default function ModalForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required
     const newErrors: Record<string, string> = {};
     fields.forEach(field => {
       if (field.required && !values[field.name]?.trim()) {
@@ -91,7 +103,19 @@ export default function ModalForm({
       setErrors(newErrors);
       return;
     }
-    onSubmit(values);
+
+    // As a safety net: convert raw HTML to MD for textarea fields
+    const v: Record<string, string> = { ...values };
+    fields.forEach(f => {
+      if (f.type === 'textarea') {
+        const val = v[f.name];
+        if (typeof val === 'string' && looksLikeHTML(val)) {
+          v[f.name] = td.turndown(val);
+        }
+      }
+    });
+
+    onSubmit(v);
   };
 
   const handleChange = (name: string, value: string) => {
@@ -99,13 +123,19 @@ export default function ModalForm({
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
+  const toggleMode = (name: string) => {
+    setModes(prev => ({
+      ...prev,
+      [name]: prev[name] === 'edit' ? 'preview' : 'edit',
+    }));
+  };
+
   const handleBackdropClick = (e: React.MouseEvent) => {
-    // keep disabled to avoid accidental close while selecting
+    // Protect from accidental close while selecting
     if (e.target === e.currentTarget) onCancel();
   };
 
-  // === Paste support for textarea (Variant B) ===
-  // Converts HTML -> Markdown and inserts at caret; handles pasted images via onUploadImage.
+  // Paste support for textarea (Variant B)
   const handlePasteIntoTextarea = async (
     e: React.ClipboardEvent<HTMLTextAreaElement>,
     fieldName: string
@@ -114,14 +144,12 @@ export default function ModalForm({
     const files = e.clipboardData.files;
     const el = e.currentTarget;
 
-    // helper: insert given string at current selection for this field
     const insertAtSelection = (insert: string) => {
       const current = values[fieldName] ?? '';
       const start = el.selectionStart ?? current.length;
       const end = el.selectionEnd ?? current.length;
       const next = current.slice(0, start) + insert + current.slice(end);
       handleChange(fieldName, next);
-      // restore caret after state update
       requestAnimationFrame(() => {
         try {
           el.focus();
@@ -131,7 +159,7 @@ export default function ModalForm({
       });
     };
 
-    // 1) If HTML present: convert to Markdown
+    // 1) HTML present -> convert to MD
     if (html) {
       e.preventDefault();
       const md = td.turndown(html);
@@ -139,7 +167,7 @@ export default function ModalForm({
       return;
     }
 
-    // 2) If image file(s) pasted and we have an uploader, upload first image
+    // 2) Pasted image -> upload & insert ![](url)
     if (files && files.length > 0 && onUploadImage) {
       const img = Array.from(files).find(f => f.type.startsWith('image/'));
       if (img) {
@@ -148,13 +176,11 @@ export default function ModalForm({
           const url = await onUploadImage(img);
           insertAtSelection(`![](${url})`);
         } catch (err) {
-          // optional: you may show a toast
           console.error('Image upload failed:', err);
         }
         return;
       }
     }
-
     // 3) Fallback: allow default plain-text paste
   };
 
@@ -176,49 +202,75 @@ export default function ModalForm({
         </div>
 
         <form onSubmit={handleSubmit} className="modal-content">
-          {fields.map((field, index) => (
-            <div key={field.name} className="form-field">
-              <label htmlFor={field.name} className="field-label">
-                {field.label}
-                {field.required && <span className="required">*</span>}
-              </label>
+          {fields.map((field, index) => {
+            const value = values[field.name] || '';
+            const isTextarea = field.type === 'textarea';
+            const mode = modes[field.name] ?? 'edit';
 
-              {field.type === 'textarea' ? (
-                <textarea
-                  id={field.name}
-                  ref={
-                    index === 0
-                      ? (firstFieldRef as React.RefObject<HTMLTextAreaElement>)
-                      : null
-                  }
-                  value={values[field.name] || ''}
-                  onChange={(e) => handleChange(field.name, e.target.value)}
-                  onPaste={(e) => handlePasteIntoTextarea(e, field.name)}
-                  placeholder={field.placeholder}
-                  className={`field-input ${errors[field.name] ? 'error' : ''}`}
-                  rows={12}
-                />
-              ) : (
-                <input
-                  id={field.name}
-                  ref={
-                    index === 0
-                      ? (firstFieldRef as React.RefObject<HTMLInputElement>)
-                      : null
-                  }
-                  type="text"
-                  value={values[field.name] || ''}
-                  onChange={(e) => handleChange(field.name, e.target.value)}
-                  placeholder={field.placeholder}
-                  className={`field-input ${errors[field.name] ? 'error' : ''}`}
-                />
-              )}
+            return (
+              <div key={field.name} className="form-field">
+                <label htmlFor={field.name} className="field-label">
+                  {field.label}
+                  {field.required && <span className="required">*</span>}
+                </label>
 
-              {errors[field.name] && (
-                <span className="field-error">{errors[field.name]}</span>
-              )}
-            </div>
-          ))}
+                {isTextarea ? (
+                  <>
+                    <div className="field-toolbar">
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => toggleMode(field.name)}
+                        aria-label="Toggle preview"
+                        title={mode === 'edit' ? 'Show preview' : 'Edit'}
+                      >
+                        {mode === 'edit' ? 'Preview' : 'Edit'}
+                      </button>
+                    </div>
+
+                    {mode === 'edit' ? (
+                      <textarea
+                        id={field.name}
+                        ref={
+                          index === 0
+                            ? (firstFieldRef as React.RefObject<HTMLTextAreaElement>)
+                            : null
+                        }
+                        value={value}
+                        onChange={(e) => handleChange(field.name, e.target.value)}
+                        onPaste={(e) => handlePasteIntoTextarea(e, field.name)}
+                        placeholder={field.placeholder}
+                        className={`field-input ${errors[field.name] ? 'error' : ''}`}
+                        rows={12}
+                      />
+                    ) : (
+                      <div className={`field-preview ${errors[field.name] ? 'error' : ''}`}>
+                        <NoteMarkdown source={value} />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <input
+                    id={field.name}
+                    ref={
+                      index === 0
+                        ? (firstFieldRef as React.RefObject<HTMLInputElement>)
+                        : null
+                    }
+                    type="text"
+                    value={value}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    placeholder={field.placeholder}
+                    className={`field-input ${errors[field.name] ? 'error' : ''}`}
+                  />
+                )}
+
+                {errors[field.name] && (
+                  <span className="field-error">{errors[field.name]}</span>
+                )}
+              </div>
+            );
+          })}
 
           <div className="modal-actions">
             <button
