@@ -1,23 +1,25 @@
 {
-  "name": "encwos-backend",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "cf:login": "wrangler login",
-    "cf:whoami": "wrangler whoami"
-  },
-  "devDependencies": {
-    "@cloudflare/workers-types": "*",
-    "typescript": "*",
-    "wrangler": "*"
-  },
-  "dependencies": {
-    "@hono/zod-validator": "^0.7.2",
-    "bcryptjs": "^3.0.2",
-    "hono": "^4.5.0",
-    "jose": "^6.0.12",
-    "zod": "^4.0.17"
-  }
+	"name": "encwos-backend",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy",
+		"cf:login": "wrangler login",
+		"cf:whoami": "wrangler whoami",
+		"db:pull": "wrangler d1 export encwos-db --remote --output=remote.sql",
+		"db:push": "wrangler d1 execute encwos-db --local --file=remote.sql"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "*",
+		"typescript": "*",
+		"wrangler": "^4.32.0"
+	},
+	"dependencies": {
+		"@hono/zod-validator": "^0.7.2",
+		"bcryptjs": "^3.0.2",
+		"hono": "^4.5.0",
+		"jose": "^6.0.12",
+		"zod": "^4.0.17"
+	}
 }
