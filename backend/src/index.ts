@@ -21,7 +21,6 @@ type Note = { id: number; folderId: number; title: string; body: string; flag?: 
 const app = new Hono<Env>()
 
 /* ---------------------------- small helpers ---------------------------- */
-// comments in English only
 const q = (db: D1Database, sql: string, params: unknown[] = []) => db.prepare(sql).bind(...params)
 const one = async <T>(stmt: D1PreparedStatement): Promise<T | null> => (await stmt.first<T>()) ?? null
 const all = async <T>(stmt: D1PreparedStatement): Promise<T[]> => {
@@ -34,7 +33,6 @@ const jsonError = (c: any, status: number, error: string, message: string, detai
 const nowUtc = "strftime('%Y-%m-%dT%H:%M:%fZ','now')"
 
 /* ------------------------------- CORS ---------------------------------- */
-// If frontend is on another origin, echo that origin so cookies are allowed.
 app.use('*', cors({
   origin: (origin) => origin ?? '',
   credentials: true,
@@ -46,6 +44,26 @@ app.use('*', cors({
 const COOKIE = 'session'
 const COOKIE_MAX_AGE = 60 * 60 * 24 // 24h
 
+// helpers for cookie
+function isHttps(c: any) {
+  try { return new URL(c.req.url).protocol === 'https:' } catch { return false }
+}
+function isSameSite(c: any) {
+  const origin = c.req.header('Origin')
+  if (!origin) return true
+  try {
+    const u = new URL(c.req.url)
+    const o = new URL(origin)
+    return u.hostname === o.hostname
+  } catch { return true }
+}
+function cookieOptsFor(c: any) {
+  const sameSite = isSameSite(c) ? 'Lax' : 'None'
+  const mustSecure = sameSite === 'None'
+  const secure = mustSecure ? true : isHttps(c)
+  return { sameSite: sameSite as 'Lax' | 'None', secure }
+}
+
 async function signJwt(payload: any, secret: string) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
@@ -53,7 +71,6 @@ async function signJwt(payload: any, secret: string) {
     .setExpirationTime(`${COOKIE_MAX_AGE}s`)
     .sign(new TextEncoder().encode(secret))
 }
-
 async function verifyJwt(token: string, secret: string) {
   const { payload } = await jwtVerify(token, new TextEncoder().encode(secret))
   return payload
@@ -90,7 +107,8 @@ app.post('/auth/register', zValidator('json', credsSchema), async (c) => {
   if (!row) return jsonError(c, 500, 'register-failed', 'User not found after insert.')
 
   const token = await signJwt({ id: row.id, email: row.email }, c.env.JWT_SECRET)
-  setCookie(c, COOKIE, token, { httpOnly: true, secure: true, sameSite: 'Lax', path: '/', maxAge: COOKIE_MAX_AGE })
+  const { sameSite, secure } = cookieOptsFor(c)
+  setCookie(c, COOKIE, token, { httpOnly: true, secure, sameSite, path: '/', maxAge: COOKIE_MAX_AGE })
   return c.json(row)
 })
 
@@ -105,13 +123,15 @@ app.post('/auth/login', zValidator('json', credsSchema), async (c) => {
   if (!ok) return jsonError(c, 401, 'invalid-credentials', 'Invalid email or password.')
 
   const token = await signJwt({ id: row.id, email: row.email }, c.env.JWT_SECRET)
-  setCookie(c, COOKIE, token, { httpOnly: true, secure: true, sameSite: 'Lax', path: '/', maxAge: COOKIE_MAX_AGE })
+  const { sameSite, secure } = cookieOptsFor(c)
+  setCookie(c, COOKIE, token, { httpOnly: true, secure, sameSite, path: '/', maxAge: COOKIE_MAX_AGE })
   return c.json({ id: row.id, email: row.email })
 })
 
 // POST /auth/logout
 app.post('/auth/logout', (c) => {
-  deleteCookie(c, COOKIE, { path: '/' })
+  const { sameSite, secure } = cookieOptsFor(c)
+  deleteCookie(c, COOKIE, { path: '/', secure, sameSite })
   return c.json({ ok: true })
 })
 
@@ -128,11 +148,9 @@ app.get('/auth/me', async (c) => {
 })
 
 /* -------------------------- API auth guard ----------------------------- */
-// Protect everything under /* except /auth/* and /health
 app.use('/*', async (c, next) => {
   const p = c.req.path
   if (p === '/health' || p.startsWith('/auth/')) return next()
-
   const tok = getCookie(c, COOKIE)
   if (!tok) return jsonError(c, 401, 'unauthorized', 'No session.')
   try {
