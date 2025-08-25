@@ -6,6 +6,13 @@ import AppLayout from './components/AppLayout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import WorkspacePage from './pages/WorkspacePage';
+
+import ParserPage from './pages/parser/ParserPage';
+import ProxySection from './pages/parser/ProxySection';
+import StatsSection from './pages/parser/StatsSection';
+import TasksSection from './pages/parser/TasksSection';
+
+
 // import ProtectedRoute from './auth/ProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute'
 import RegisterPage from './pages/RegisterPage';
@@ -30,6 +37,22 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {/* Protected: Parser with nested sections */}
+        <Route
+          path="/parser"
+          element={
+            <ProtectedRoute>
+              <ParserPage />
+            </ProtectedRoute>
+          }
+        >
+          {/* Default sub-route -> /parser */}
+          <Route index element={<ProxySection />} />
+          {/* Explicit sub-routes */}
+          <Route path="proxy" element={<ProxySection />} />
+          <Route path="stats" element={<StatsSection />} />
+          <Route path="tasks" element={<TasksSection />} />
+        </Route>
         <Route path="*" element={<h2>Not found</h2>} />
       </Routes>
     </AppLayout>

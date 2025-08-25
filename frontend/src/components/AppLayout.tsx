@@ -1,34 +1,37 @@
 import type { ReactNode } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './layout.css';
 
 type NavItem = { label: string; to: string; requiresAuth?: boolean };
+
 const NAV_ITEMS: NavItem[] = [
   { label: 'Home', to: '/' },
   { label: 'Workspace', to: '/app', requiresAuth: true },
+  { label: 'Parser', to: '/parser', requiresAuth: true },
   { label: 'Login', to: '/login' },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth(); // get auth state
+  const isAuthed = !!user;
+
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const isAuthed = true;
 
   // Close menu and manage body scroll
   const closeMenu = () => {
     setMenuOpen(false);
-    // Return focus to toggle button
+    // return focus to toggle button
     setTimeout(() => {
       toggleRef.current?.focus();
     }, 100);
   };
 
   // Toggle menu
-  const toggleMenu = () => {
-    setMenuOpen(prev => !prev);
-  };
+  const toggleMenu = () => setMenuOpen(prev => !prev);
 
   // Handle keyboard events
   useEffect(() => {
@@ -76,19 +79,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (menuOpen && menuRef.current) {
       const firstLink = menuRef.current.querySelector('a') as HTMLElement;
-      setTimeout(() => {
-        firstLink?.focus();
-      }, 100); // Wait for animation
+      setTimeout(() => firstLink?.focus(), 100); // wait for animation
     }
   }, [menuOpen]);
 
-  const onNavClick = () => {
-    closeMenu();
-  };
+  const onNavClick = () => closeMenu();
 
-  const filteredNavItems = NAV_ITEMS.filter(item =>
-    item.requiresAuth ? isAuthed : true
-  );
+  // Compute visible items based on auth
+  const visibleNavItems = NAV_ITEMS.filter(item => {
+    // hide protected items for guests
+    if (item.requiresAuth && !isAuthed) return false;
+    // hide Login for authed users
+    if (!item.requiresAuth && item.to === '/login' && isAuthed) return false;
+    return true;
+  });
 
   return (
     <div className="app">
@@ -96,8 +100,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="brand">EncWos</div>
 
         {/* Desktop nav */}
-        <nav className="app-nav desktop">
-          {filteredNavItems.map(item => (
+        <nav className="app-nav desktop" aria-busy={loading ? true : undefined}>
+          {visibleNavItems.map(item => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -135,7 +139,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         aria-label="Мобильная навигация"
         role="navigation"
       >
-        {filteredNavItems.map(item => (
+        {visibleNavItems.map(item => (
           <NavLink
             key={item.to}
             to={item.to}
