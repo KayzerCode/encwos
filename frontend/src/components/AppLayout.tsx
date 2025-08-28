@@ -10,6 +10,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Home', to: '/' },
   { label: 'Workspace', to: '/app', requiresAuth: true },
   { label: 'Parser', to: '/parser', requiresAuth: true },
+  { label: 'Content Seeds', to: '/content', requiresAuth: true },
   { label: 'Login', to: '/login' },
 ];
 
