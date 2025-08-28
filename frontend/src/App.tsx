@@ -14,7 +14,7 @@ import TasksSection from './pages/parser/TasksSection';
 
 import ContentPage from './pages/content/ContentPage';
 import SeedsSection from './pages/content/SeedsSection';
-import GroupsSection from './pages/content/GroupSection';
+import GroupsSection from './pages/content/GroupsSection';
 
 
 // import ProtectedRoute from './auth/ProtectedRoute';
