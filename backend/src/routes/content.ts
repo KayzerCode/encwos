@@ -41,7 +41,7 @@ contentRoutes.all('/content-seeds/*', async (c) => {
     }
 
     const upstream = await fetch(upstreamUrl, init);
-
+    console.log('← status', upstream.status);
     // Copy safe response headers
     const outHeaders = new Headers();
     upstream.headers.forEach((value, key) => {
