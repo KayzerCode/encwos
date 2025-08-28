@@ -1,0 +1,41 @@
+{
+    "pagination": {
+        "has_next": false,
+        "has_prev": false,
+        "page": 1,
+        "per_page": 20,
+        "total_count": 1,
+        "total_pages": 1
+    },
+    "products": [
+        {
+            "availability": "In Stock",
+            "currency": "USD",
+            "description": "N/A",
+            "external_id": "B0D7BWV74T",
+            "features": [
+                "Exceptional Sound Quality: With a powerful 15W output, this bluetooth speaker delivers rich, crystal-clear sound with deep bass and crisp highs. Experience superior audio performance that makes every beat and melody sound better than ever.",
+                "All-Day Battery Life: Equipped with a powerful 2500mAh battery, this speaker can keep the music going all day long on a single charge. Enjoy uninterrupted playback for your longest playlists and parties.",
+                "Portable and Convenient: Designed with portability in mind, this compact speaker is easy to carry around. Its small size fits perfectly in your bag, and the included lanyard makes it easy to hang anywhere, whether you're at home or on the go.",
+                "Rugged and Waterproof Design: With an IP67 waterproof rating, our speaker is built to withstand the elements. Perfect for outdoor adventures, beach trips, or poolside parties, itu2019s dustproof and can handle being submerged in water.",
+                "Dynamic Light Show: Elevate your listening experience with dynamic lights that sync with your music. The flashing lights change according to the audio frequency, adding a visual element to your favorite tracks and creating an immersive atmosphere.",
+                "Wireless Stereo (TWS) Connection with 30W Output: Two speakers connected via TWS technology take your audio experience to the next level. Wirelessly connect two speakers to create a true stereo system with a combined total output power of 30W.",
+                "Advanced Bluetooth 5.3: Enjoy seamless connectivity with the latest Bluetooth 5.3 technology. Benefit from a longer connection range, faster pairing, and stable audio streaming, ensuring you can keep the party going from anywhere within range."
+            ],
+            "id": 1,
+            "images": [
+                "https://m.media-amazon.com/images/I/81kWrb3DioL._AC_SX466_.jpg",
+                "https://m.media-amazon.com/images/I/8180UR3YBtL._AC_SX466_.jpg",
+                "https://images-na.ssl-images-amazon.com/images/I/81Hf+oGHFsL._AC_UL165_SR165,165_.jpg",
+                "https://images-na.ssl-images-amazon.com/images/I/71Nve8U7B9L._AC_UL165_SR165,165_.jpg",
+                "https://images-na.ssl-images-amazon.com/images/I/712alUXnXFL._AC_UL165_SR165,165_.jpg"
+            ],
+            "price": 18.0,
+            "rating": 4.7,
+            "review_count": 2819,
+            "scraped_at": "2025-08-24 16:26:21",
+            "source": "amazon",
+            "title": "Bluetooth Speaker Wireless,IP67 Waterproof & Dustproof Portable Speaker with Lights,15W Loud Stereo Sound, 2500mAh Battery All Day Playtime, TWS Pairing, BT5.3, Home/Party/Outdoor/Beach (Black)"
+        }
+    ]
+}

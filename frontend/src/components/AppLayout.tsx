@@ -14,7 +14,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth(); // get auth state
+  const { user, loading, logout  } = useAuth(); // get auth state
   const isAuthed = !!user;
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -109,7 +109,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             >
               {item.label}
             </NavLink>
-          ))}
+					))}
+					{/* If logged in – show Logout button */}
+          {isAuthed && (
+						<NavLink
+							className={undefined}
+							to="/"
+							onClick={() => { logout(); closeMenu(); }}
+						>
+              Logout
+            </NavLink>
+          )}
         </nav>
 
         {/* Burger */}
@@ -117,7 +127,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           ref={toggleRef}
           className="nav-toggle"
           aria-expanded={menuOpen}
-          aria-label={menuOpen ? 'Закрыть навигацию' : 'Открыть навигацию'}
+          aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
           onClick={toggleMenu}
         >
           ☰
@@ -136,7 +146,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         ref={menuRef}
         className={`app-nav mobile-drawer ${menuOpen ? 'open' : ''}`}
         aria-hidden={!menuOpen}
-        aria-label="Мобильная навигация"
+        aria-label="Mobile navigation"
         role="navigation"
       >
         {visibleNavItems.map(item => (
@@ -149,7 +159,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           >
             {item.label}
           </NavLink>
-        ))}
+				))}
+
+				{/* Logout for mobile */}
+        {isAuthed && (
+          <button onClick={() => { logout(); closeMenu(); }} tabIndex={menuOpen ? 0 : -1}>
+            Logout
+          </button>
+        )}
       </nav>
 
       <main className="app-main">{children}</main>

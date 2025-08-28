@@ -47,7 +47,7 @@ export default function App() {
           }
         >
           {/* Default sub-route -> /parser */}
-          <Route index element={<ProxySection />} />
+          <Route index element={<StatsSection />} />
           {/* Explicit sub-routes */}
           <Route path="proxy" element={<ProxySection />} />
           <Route path="stats" element={<StatsSection />} />

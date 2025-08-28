@@ -2,9 +2,12 @@
 .parser {
     display: grid;
     grid-template-columns: 220px 1fr;
-    gap: 16px;
-    min-height: calc(100vh - 140px);
-    /* header+footer approx */
+    /* full height minus header+footer */
+    min-height: calc(100vh - 120px);
+    /* remove outer gap, we will handle padding in children */
+    gap: 0;
+    overflow: hidden;
+    /* no extra scrollbars */
 }
 
 @media (max-width: 860px) {
@@ -17,6 +20,8 @@
 .parser-rail {
     border-right: 1px solid rgba(255, 255, 255, 0.12);
     padding: 16px;
+    min-width: 0;
+    /* prevent rail from pushing layout */
 }
 
 @media (max-width: 860px) {
@@ -57,6 +62,12 @@
 /* Content */
 .parser-content {
     padding: 16px;
+    overflow-x: hidden;
+    /* block horizontal scroll */
+    overflow-y: auto;
+    /* allow vertical scroll only inside content */
+    min-width: 0;
+    /* prevent flex/grid overflow */
 }
 
 /* Panel + basic UI atoms */

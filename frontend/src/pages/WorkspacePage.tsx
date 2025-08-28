@@ -90,17 +90,17 @@ export default function WorkspacePage() {
         setLoading(false);
       }
     },
-    [] // ✅ Пустой массив - функция стабильна
+    [] // No dependencies - stable function
   );
 
-  // ✅ Загружаем все заметки только один раз при монтировании
+  // ✅ Load all notes on mount
   useEffect(() => {
     (async () => {
       await reloadNotes();
     })();
   }, [reloadNotes]);
 
-  // ✅ При изменении selectedFolder только пересчитываем visibleNotes из уже загруженных allNotes
+  // ✅ Recompute visible notes when filters change
   useEffect(() => {
     const newVisible = recomputeVisible(allNotes, selectedFolder, folders);
     setVisibleNotes(newVisible);
@@ -289,8 +289,8 @@ export default function WorkspacePage() {
             setSelectedFolder(id);
             setSidebarOpen(false);
           }}
-          refreshKey={0} // ✅ Статичное значение - дерево не перерисовывается извне
-          onRefreshFolders={refreshFoldersForBreadcrumbs} // ✅ Только для breadcrumbs
+          refreshKey={0} // ✅ Static value - tree is not re-rendered from outside
+          onRefreshFolders={refreshFoldersForBreadcrumbs} // ✅ Only for breadcrumbs
         />
       </aside>
 
