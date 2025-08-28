@@ -12,6 +12,10 @@ import ProxySection from './pages/parser/ProxySection';
 import StatsSection from './pages/parser/StatsSection';
 import TasksSection from './pages/parser/TasksSection';
 
+import ContentPage from './pages/content/ContentPage';
+import SeedsSection from './pages/content/SeedsSection';
+import GroupsSection from './pages/content/GroupSection';
+
 
 // import ProtectedRoute from './auth/ProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute'
@@ -52,6 +56,22 @@ export default function App() {
           <Route path="proxy" element={<ProxySection />} />
           <Route path="stats" element={<StatsSection />} />
           <Route path="tasks" element={<TasksSection />} />
+        </Route>
+
+        {/* Protected: Content with nested sections */}
+        <Route
+          path="/content"
+          element={
+            <ProtectedRoute>
+              <ContentPage />
+            </ProtectedRoute>
+          }
+        >
+          {/* Default sub-route -> /content */}
+          <Route index element={<SeedsSection />} />
+          {/* Explicit sub-routes */}
+          <Route path="seeds" element={<SeedsSection />} />
+          <Route path="groups" element={<GroupsSection />} />
         </Route>
         <Route path="*" element={<h2>Not found</h2>} />
       </Routes>
