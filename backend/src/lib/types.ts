@@ -6,5 +6,6 @@ export type Env = {
   Bindings: {
     DB: D1Database
     JWT_SECRET: string
+    CONTENT_API_BASE: string
   }
 };

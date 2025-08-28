@@ -4,75 +4,67 @@ import type { Env } from '../lib/types';
 
 const contentRoutes = new Hono<Env>();
 
-// Proxy to api-server for content-seeds
+// Preflight first
+contentRoutes.options('/content-seeds/*', (c) => c.body(null, 204));
+
 contentRoutes.all('/content-seeds/*', async (c) => {
-  const url = new URL(c.req.url);
+  // This router is mounted under /content
+  const reqUrl = new URL(c.req.url);
+  const mountPrefix = '/content/content-seeds';
+  if (!reqUrl.pathname.startsWith(mountPrefix)) {
+    return c.json({ error: 'Bad route' }, 400);
+  }
 
-  // Extract path after /content-seeds
-  const apiPath = url.pathname.replace('/content-seeds', '');
+  const tailPath = reqUrl.pathname.slice(mountPrefix.length) || '/';
 
-  // URL of your api-server - replace with actual address
-  // Example: 'https://your-api-server.com' or 'http://localhost:3000'
-  const API_SERVER_BASE = 'http://91.99.201.12:5000'; // Change this to your api-server URL
-  const apiServerUrl = `${API_SERVER_BASE}/api/content-seeds${apiPath}${url.search}`;
+  // Env binding (now properly typed)
+  const base = c.env.CONTENT_API_BASE; // e.g. "http://91.99.201.12:5000"
+  const upstreamUrl = `${base}/api/content-seeds${tailPath}${reqUrl.search}`;
 
   try {
-    const requestHeaders: Record<string, string> = {};
-
-    // Copy relevant headers from original request
-    const headerEntries = Object.entries(c.req.header());
-    for (const [key, value] of headerEntries) {
-      // Skip host and other headers that shouldn't be proxied
-      if (!['host', 'origin', 'referer'].includes(key.toLowerCase())) {
-        requestHeaders[key] = value;
-      }
+    // Build safe request headers
+    const fwdHeaders = new Headers();
+    const inHeaders = c.req.header(); // Record<string, string>
+    for (const [k, v] of Object.entries(inHeaders)) {
+      const key = k.toLowerCase();
+      if (key === 'host' || key === 'origin' || key === 'referer' || key === 'connection' || key === 'content-length') continue;
+      fwdHeaders.set(k, v);
     }
 
-    const response = await fetch(apiServerUrl, {
+    const init: RequestInit = {
       method: c.req.method,
-      headers: requestHeaders,
-      body: c.req.method !== 'GET' && c.req.method !== 'HEAD'
-        ? await c.req.arrayBuffer()
-        : undefined,
+      headers: fwdHeaders,
+    };
+
+    if (c.req.method !== 'GET' && c.req.method !== 'HEAD') {
+      init.body = c.req.raw.body ?? (await c.req.arrayBuffer());
+    }
+
+    const upstream = await fetch(upstreamUrl, init);
+
+    // Copy safe response headers
+    const outHeaders = new Headers();
+    upstream.headers.forEach((value, key) => {
+      const lkey = key.toLowerCase();
+      if (lkey === 'connection' || lkey === 'transfer-encoding' || lkey === 'content-encoding') return;
+      outHeaders.set(key, value);
     });
 
-    // Get response data
-    const responseData = await response.arrayBuffer();
-
-    // Copy response headers
-    const responseHeaders: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-      responseHeaders[key] = value;
+    // Do NOT set CORS here; global cors() handles it
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: outHeaders,
     });
-
-    // Ensure CORS headers are set
-    responseHeaders['Access-Control-Allow-Origin'] = '*';
-    responseHeaders['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
-    responseHeaders['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
-
-    return new Response(responseData, {
-      status: response.status,
-      headers: responseHeaders,
-    });
-  } catch (error) {
-    console.error('Proxy error:', error);
-    return c.json({
-      error: 'API Server unavailable',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, 503);
+  } catch (err) {
+    console.error('Content proxy error:', err);
+    return c.json(
+      {
+        error: 'API Server unavailable',
+        message: err instanceof Error ? err.message : 'Unknown error',
+      },
+      503
+    );
   }
-});
-
-// Handle OPTIONS requests for CORS preflight
-contentRoutes.options('/content-seeds/*', (c) => {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
 });
 
 export { contentRoutes };
